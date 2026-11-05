@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from pydantic import BaseModel
 from backend.tour_api import get_places, get_region_codes
@@ -11,7 +12,13 @@ load_dotenv()
 ODSAY_API_KEY = os.getenv("ODSAY_API_KEY")
 
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class TripRequest(BaseModel):
     destination: str
