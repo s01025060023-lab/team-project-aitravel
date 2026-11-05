@@ -30,6 +30,10 @@ class TripRequest(BaseModel):
     people: int
     budget: int
 
+    startPlace: str = ""
+    endPlace: str = ""
+    startTime: str = ""
+    endTime: str = ""
 
 @app.post("/trips")
 def create_trip(trip: TripRequest):
@@ -41,7 +45,11 @@ def create_trip(trip: TripRequest):
         "disliked": trip.disliked,
         "transport": trip.transport,
         "people": trip.people,
-        "budget": trip.budget
+        "budget": trip.budget,
+        "startPlace": trip.startPlace,
+        "endPlace": trip.endPlace,
+        "startTime": trip.startTime,
+        "endTime": trip.endTime
     }
 @app.get("/")
 def home():
