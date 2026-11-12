@@ -123,7 +123,7 @@ def get_region_codes():
         "_type": "json"
       }
 
-      response = requests.get(url, params=params)
+      response = requests.get(url, params=params, timeout=15)
       return response.json()
 
 def find_region_code(destination):
@@ -170,7 +170,7 @@ def get_sigungu_codes(region_code):
         "lDongRegnCd": region_code
     }
 
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, timeout=15)
     return response.json()
 
 def find_sigungu_code(destination, region_code):
