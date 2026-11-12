@@ -137,3 +137,27 @@ def places_by_styles(trip: TripRequest):
         "results": results
     }
 
+
+import requests
+
+@app.get("/test-network")
+def test_network():
+    urls = {
+        "google": "https://www.google.com",
+        "tour_api": "https://apis.data.go.kr/B551011/KorService2/areaBasedList2"
+    }
+
+    results = {}
+
+    for name, url in urls.items():
+        try:
+            response = requests.get(url, timeout=5)
+            results[name] = {
+                "status": response.status_code
+            }
+        except requests.exceptions.RequestException as e:
+            results[name] = {
+                "error": type(e).__name__
+            }
+
+    return results
