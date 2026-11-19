@@ -6,6 +6,30 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 api_key = os.getenv("TOUR_API_KEY")
 
+TOUR_PROXY_URL = os.getenv("TOUR_PROXY_URL")
+
+def tour_api_get(url, params):
+    if TOUR_PROXY_URL:
+        endpoint = url.split("/")[-1]
+
+       response = requests.get(
+    f"{TOUR_PROXY_URL}/tour-proxy/{endpoint}",
+    params=params,
+    headers={
+        "X-Proxy-Token": os.getenv("TOUR_PROXY_TOKEN", "")
+    },
+    timeout=30
+)
+    else:
+        response = requests.get(
+            url,
+            params=params,
+            timeout=15
+        )
+
+    response.raise_for_status()
+    return response
+
 
 def get_places(destination, style):
     region_code, sigungu_code = find_location_codes(destination)
@@ -63,13 +87,7 @@ def get_places(destination, style):
             print("요청 지역:", request_params.get("lDongRegnCd"),
                   "시군구:", request_params.get("lDongSignguCd"))
 
-            response = requests.get(
-                url,
-                params=request_params,
-                timeout=15
-            )
-            response.raise_for_status()
-
+            response = tour_api_get(url, request_params)
             data = response.json()
 
             items = (
@@ -123,7 +141,7 @@ def get_region_codes():
         "_type": "json"
       }
 
-      response = requests.get(url, params=params, timeout=15)
+      response = tour_api_get(url, params)
       return response.json()
 
 def find_region_code(destination):
@@ -170,7 +188,7 @@ def get_sigungu_codes(region_code):
         "lDongRegnCd": region_code
     }
 
-    response = requests.get(url, params=params, timeout=15)
+    response = tour_api_get(url, params)
     return response.json()
 
 def find_sigungu_code(destination, region_code):

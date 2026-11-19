@@ -161,3 +161,51 @@ def test_network():
             }
 
     return results
+
+import os
+import requests
+from fastapi import Request, HTTPException
+
+@app.get("/tour-proxy/{endpoint}")
+def tour_proxy(endpoint: str, request: Request):
+
+    # 허용된 관광공사 API만 중계
+    allowed = {"ldongCode2", "areaBasedList2"}
+
+    if endpoint not in allowed:
+        raise HTTPException(status_code=404)
+
+    # 비밀 토큰 확인
+    expected_token = os.getenv("TOUR_PROXY_TOKEN")
+    received_token = request.headers.get("X-Proxy-Token")
+
+    if not expected_token or not received_token:
+        raise HTTPException(status_code=403)
+
+    import hmac
+    if not hmac.compare_digest(received_token, expected_token):
+        raise HTTPException(status_code=403)
+
+    # 관광공사 API 호출
+    url = f"https://apis.data.go.kr/B551011/KorService2/{endpoint}"
+
+    params = dict(request.query_params)
+    params["serviceKey"] = os.getenv("TOUR_API_KEY")
+
+    if not params["serviceKey"]:
+        raise HTTPException(status_code=503, detail="API key not configured")
+
+    try:
+        response = requests.get(
+            url,
+            params=params,
+            timeout=15
+        )
+        response.raise_for_status()
+        return response.json()
+
+    except requests.RequestException:
+        raise HTTPException(
+            status_code=502,
+            detail="Tourism API request failed"
+        )
