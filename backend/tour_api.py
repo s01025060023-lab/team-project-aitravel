@@ -12,14 +12,14 @@ def tour_api_get(url, params):
     if TOUR_PROXY_URL:
         endpoint = url.split("/")[-1]
 
-       response = requests.get(
-    f"{TOUR_PROXY_URL}/tour-proxy/{endpoint}",
-    params=params,
-    headers={
-        "X-Proxy-Token": os.getenv("TOUR_PROXY_TOKEN", "")
-    },
-    timeout=30
-)
+        response = requests.get(
+            f"{TOUR_PROXY_URL}/tour-proxy/{endpoint}",
+            params=params,
+            headers={
+                "X-Proxy-Token": os.getenv("TOUR_PROXY_TOKEN", "")
+            },
+            timeout=30
+        )
     else:
         response = requests.get(
             url,
