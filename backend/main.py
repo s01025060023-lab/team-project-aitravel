@@ -20,20 +20,104 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class TripRequest(BaseModel):
+class TripRequest(BaseModel): #프론트 스키마
     destination: str
     startDate: str
     endDate: str
     styles: list[str]
     disliked: str
     transport: str
-    people: int
-    budget: int
-
     startPlace: str = ""
     endPlace: str = ""
     startTime: str = ""
     endTime: str = ""
+
+class Location(BaseModel): #ai장소 스키마
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+    style: str
+    address: str | None = None
+    rank: int | None = 999
+
+
+class ItineraryRequest(BaseModel): #ai요청 스키마
+    destination: str
+    startDate: str
+    endDate: str
+    startTime: str = "09:00"
+    endTime: str = "21:00"
+
+    styles: list[str]
+    disliked: str = ""
+    transport: str
+
+    startPlace: str = ""
+    endPlace: str = ""
+
+    startLocation: Location | None = None
+    locations: list[Location]
+
+def convert_to_locations(places, style): #ai장소 스키마에 맞게 변환
+    locations = []
+
+    for index, place in enumerate(places, start=1):
+        if not place.get("latitude") or not place.get("longitude"):
+            continue
+
+        location = Location(
+            id=index,
+            name=place["name"],
+            latitude=float(place["latitude"]),
+            longitude=float(place["longitude"]),
+            style=style,
+            address=place.get("address"),
+            rank=999
+        )
+
+        locations.append(location)
+
+    return locations
+
+def prepare_ai_locations(trip: TripRequest):
+    all_locations = []
+    next_id = 1
+
+    for style in trip.styles:
+        places = get_places(trip.destination, style)
+
+        converted = convert_to_locations(places, style)
+
+        for location in converted:
+            location.id = next_id
+            next_id += 1
+            all_locations.append(location)
+
+    return all_locations
+
+def prepare_ai_request(trip: TripRequest): #ai로 전송할 데이터
+    locations = prepare_ai_locations(trip)
+
+
+    return ItineraryRequest(
+        destination=trip.destination,
+        startDate=trip.startDate,
+        endDate=trip.endDate,
+        startTime=trip.startTime or "09:00",
+        endTime=trip.endTime or "21:00",
+        styles=trip.styles,
+        disliked=trip.disliked,
+        transport=trip.transport,
+        startPlace=trip.startPlace,
+        endPlace=trip.endPlace,
+        startLocation=None,
+        locations=locations
+    )
+
+@app.post("/test-ai-request")
+def test_ai_request(trip: TripRequest):
+    return prepare_ai_request(trip)
 
 @app.post("/trips")
 def create_trip(trip: TripRequest):
@@ -51,6 +135,7 @@ def create_trip(trip: TripRequest):
         "startTime": trip.startTime,
         "endTime": trip.endTime
     }
+    
 @app.get("/")
 def home():
     return {"message": "AI Travel Backend"}
