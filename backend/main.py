@@ -8,6 +8,7 @@ import os
 from dotenv import load_dotenv
 from backend.naver_directions import get_car_route
 load_dotenv()
+from typing import List
 
 ODSAY_API_KEY = os.getenv("ODSAY_API_KEY")
 
@@ -58,6 +59,30 @@ class ItineraryRequest(BaseModel): #ai요청 스키마
 
     startLocation: Location | None = None
     locations: list[Location]
+
+    # 4. ai일정 타임라인 항목 스키마
+class ScheduleItem(BaseModel):
+    location: Location
+    arrival_time: str  # "HH:MM"
+    departure_time: str  # "HH:MM"
+    stay_duration_minutes: int
+    wait_time_minutes: int
+    travel_time_from_prev_minutes: int
+    estimated_rating: float
+
+
+# 5. ai일자별 스케줄 스키마
+class DaySchedule(BaseModel):
+    day: int
+    date: str
+    schedule: List[ScheduleItem]
+
+
+# 6. ai응답(Response) 스키마
+class ItineraryResponse(BaseModel):
+    days: List[DaySchedule]
+    total_locations: int
+    total_travel_time_minutes: int
 
 def convert_to_locations(places, style): #ai장소 스키마에 맞게 변환
     locations = []
@@ -128,8 +153,6 @@ def create_trip(trip: TripRequest):
         "styles": trip.styles,
         "disliked": trip.disliked,
         "transport": trip.transport,
-        "people": trip.people,
-        "budget": trip.budget,
         "startPlace": trip.startPlace,
         "endPlace": trip.endPlace,
         "startTime": trip.startTime,
